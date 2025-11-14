@@ -94,7 +94,6 @@ class PenTestAssistant:
 
         unauthorized_msg = self._ensure_authorized()
         if unauthorized_msg:
-            # Still allow non-actionable/general security learning without target specifics
             self.conversation.append({"role": "user", "content": f"GENERAL_ADVICE_ONLY\n\n{user_input}"})
             message = self._response(temperature=0.5, max_tokens=800)
             return unauthorized_msg + "\n\n—\nGeneral guidance:\n" + message
@@ -140,7 +139,6 @@ class PenTestAssistant:
                     if lower.endswith(".zip"):
                         with zipfile.ZipFile(path, "r") as zf:
                             for zi in zf.infolist():
-                                # Avoid directories and non-text
                                 if zi.is_dir():
                                     continue
                                 name_low = zi.filename.lower()
@@ -233,7 +231,7 @@ def set_auth(authorized):
     return "Authorization confirmed." if authorized else "Authorization revoked."
 
 with gr.Blocks(theme=gr.themes.Soft()) as demo:
-    gr.Markdown("# 🛡️ PenTest Assistant")
+    gr.Markdown("# PenTest Assistant")
     gr.Markdown("Professional, ethical guidance for authorized penetration testing.")
 
     with gr.Row():
@@ -252,14 +250,14 @@ with gr.Blocks(theme=gr.themes.Soft()) as demo:
     auth_status = gr.Textbox(label="Authorization Status", interactive=False)
     authorized_chk.change(set_auth, inputs=authorized_chk, outputs=auth_status)
 
-    with gr.Tab("💬 Chat"):
+    with gr.Tab("Chat"):
         gr.ChatInterface(
             fn=chatbot_interface,
             title="Interactive Chat",
             description="Ask anything about penetration testing. High-level guidance only without authorization."
         )
 
-    with gr.Tab("📁 Scan Analyzer"):
+    with gr.Tab("Scan Analyzer"):
         with gr.Row():
             file_input = gr.File(
                 label="Upload scan/log files or a zip (txt, log, xml, zip)",
@@ -275,14 +273,13 @@ with gr.Blocks(theme=gr.themes.Soft()) as demo:
         analyze_btn = gr.Button("Analyze")
         analyze_btn.click(fn=scan_analyzer, inputs=[file_input, text_input], outputs=output)
 
-    with gr.Tab("📄 Report Generator"):
+    with gr.Tab("Report Generator"):
         report_btn = gr.Button("Generate Report")
         report_output = gr.Textbox(label="Final Report", lines=25)
         report_btn.click(fn=generate_report, outputs=report_output)
 
 if __name__ == "__main__":
     port = int(os.getenv("PORT", "7860"))
-    # In production, keep debug/analytics off; no "share=True"
     demo.queue(concurrency_count=10).launch(
         server_name="0.0.0.0",
         server_port=port,
